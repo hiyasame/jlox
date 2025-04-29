@@ -5,11 +5,27 @@ class AstPrinter implements Expr.Visitor<String> {
         return expr.accept(this);
     }
 
+    @Override
+    public String visitAssignExpr(Expr.Assign expr) {
+        return "";
+    }
+
     // 新增部分开始
     @Override
     public String visitBinaryExpr(Expr.Binary expr) {
         return parenthesize(expr.operator.lexeme,
                 expr.left, expr.right);
+    }
+
+    @Override
+    public String visitCommaExpr(Expr.Comma expr) {
+        return parenthesize("comma",
+                expr.left, expr.right);
+    }
+
+    @Override
+    public String visitTernaryExpr(Expr.Ternary expr) {
+        return parenthesize("ternary", expr.cond, expr.then, expr.elseThen);
     }
 
     @Override
@@ -24,8 +40,18 @@ class AstPrinter implements Expr.Visitor<String> {
     }
 
     @Override
+    public String visitLogicalExpr(Expr.Logical expr) {
+        return parenthesize(expr.operator.lexeme, expr.left, expr.right);
+    }
+
+    @Override
     public String visitUnaryExpr(Expr.Unary expr) {
         return parenthesize(expr.operator.lexeme, expr.right);
+    }
+
+    @Override
+    public String visitVariableExpr(Expr.Variable expr) {
+        return parenthesize(expr.name.lexeme, expr);
     }
 
     private String parenthesize(String name, Expr... exprs) {
