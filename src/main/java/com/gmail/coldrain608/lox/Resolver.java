@@ -4,6 +4,7 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Stack;
+import java.util.stream.Collectors;
 
 public class Resolver implements Expr.Visitor<Void>, Stmt.Visitor<Void> {
     private final Interpreter interpreter;
@@ -63,11 +64,11 @@ public class Resolver implements Expr.Visitor<Void>, Stmt.Visitor<Void> {
 
     private void endScope() {
         Map<String, VariableState> pop = scopes.pop();
-        pop.forEach((var, state) -> {
-            if (state.stage != VariableStage.USED) {
-                Lox.error(state.declare, "variable " + var + " is not used.");
-            }
-        });
+//        pop.forEach((var, state) -> {
+//            if (state.stage != VariableStage.USED) {
+//                Lox.error(state.declare, "variable " + var + " is not used.");
+//            }
+//        });
     }
 
     private void declare(Token name) {
@@ -98,6 +99,7 @@ public class Resolver implements Expr.Visitor<Void>, Stmt.Visitor<Void> {
 
         VariableState variableState = new VariableState();
         variableState.stage = VariableStage.DEFINED;
+        variableState.declare = prevState.declare;
         variableState.define = name;
         variableState.idx = prevState.idx;
 
@@ -106,13 +108,18 @@ public class Resolver implements Expr.Visitor<Void>, Stmt.Visitor<Void> {
 
     private void use(Token name) {
         if (scopes.isEmpty()) return;
-        VariableState prevState = scopes.peek().get(name.lexeme);
+        List<VariableState> states = scopes.stream().filter(map -> map.containsKey(name.lexeme))
+                .map((map) -> map.get(name.lexeme))
+                .collect(Collectors.toList());
+        VariableState prevState = states.get(states.size() - 1);
 
         assert prevState != null
                 && prevState.stage == VariableStage.DECLARED : "variable define before declared.";
 
         VariableState variableState = new VariableState();
         variableState.stage = VariableStage.USED;
+        variableState.declare = prevState.declare;
+        variableState.define = name;
         variableState.use = name;
         variableState.idx = prevState.idx;
 
@@ -213,15 +220,15 @@ public class Resolver implements Expr.Visitor<Void>, Stmt.Visitor<Void> {
     @Override
     public Void visitVariableExpr(Expr.Variable expr) {
         if (!scopes.isEmpty() &&
-                (scopes.peek().get(expr.name.lexeme) == null
-                || scopes.peek().get(expr.name.lexeme).stage == VariableStage.DECLARED)) {
+                (scopes.peek().get(expr.name.lexeme) != null
+                && scopes.peek().get(expr.name.lexeme).stage == VariableStage.DECLARED)) {
             Lox.error(expr.name,
                     "Can't read local variable in its own initializer.");
         }
 
         resolveLocal(expr, expr.name);
 
-        use(expr.name);
+//        use(expr.name);
         return null;
     }
 
