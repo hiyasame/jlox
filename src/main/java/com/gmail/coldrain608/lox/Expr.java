@@ -11,8 +11,12 @@ public abstract class Expr {
     public R visitGroupingExpr(Grouping expr);
     public R visitLiteralExpr(Literal expr);
     public R visitLogicalExpr(Logical expr);
+    public R visitSetExpr(Set expr);
+    public R visitSuperExpr(Super expr);
+    public R visitThisExpr(This expr);
     public R visitUnaryExpr(Unary expr);
     public R visitCallExpr(Call expr);
+    public R visitGetExpr(Get expr);
     public R visitVariableExpr(Variable expr);
   }
   public static class Assign extends Expr {
@@ -115,6 +119,48 @@ public abstract class Expr {
    public final Token operator;
    public final Expr right;
   }
+  public static class Set extends Expr {
+    Set(Expr object, Token name, Expr value) {
+      this.object = object;
+      this.name = name;
+      this.value = value;
+    }
+
+    @Override
+    public <R> R accept(Visitor<R> visitor) {
+      return visitor.visitSetExpr(this);
+    }
+
+   public final Expr object;
+   public final Token name;
+   public final Expr value;
+  }
+  public static class Super extends Expr {
+    Super(Token keyword, Token method) {
+      this.keyword = keyword;
+      this.method = method;
+    }
+
+    @Override
+    public <R> R accept(Visitor<R> visitor) {
+      return visitor.visitSuperExpr(this);
+    }
+
+   public final Token keyword;
+   public final Token method;
+  }
+  public static class This extends Expr {
+    This(Token keyword) {
+      this.keyword = keyword;
+    }
+
+    @Override
+    public <R> R accept(Visitor<R> visitor) {
+      return visitor.visitThisExpr(this);
+    }
+
+   public final Token keyword;
+  }
   public static class Unary extends Expr {
     Unary(Token operator, Expr right) {
       this.operator = operator;
@@ -144,6 +190,20 @@ public abstract class Expr {
    public final Expr callee;
    public final Token paren;
    public final List<Expr> arguments;
+  }
+  public static class Get extends Expr {
+    Get(Expr object, Token name) {
+      this.object = object;
+      this.name = name;
+    }
+
+    @Override
+    public <R> R accept(Visitor<R> visitor) {
+      return visitor.visitGetExpr(this);
+    }
+
+   public final Expr object;
+   public final Token name;
   }
   public static class Variable extends Expr {
     Variable(Token name) {

@@ -5,6 +5,7 @@ import java.util.List;
 public abstract class Stmt {
   public interface Visitor<R> {
     public R visitBlockStmt(Block stmt);
+    public R visitClassStmt(Class stmt);
     public R visitExpressionStmt(Expression stmt);
     public R visitFunctionStmt(Function stmt);
     public R visitIfStmt(If stmt);
@@ -26,6 +27,24 @@ public abstract class Stmt {
 
    public final List<Stmt> statements;
   }
+  public static class Class extends Stmt {
+    Class(Token name, Expr.Variable superclass, List<Stmt.Function> methods, List<Stmt.Function> klassMethods) {
+      this.name = name;
+      this.superclass = superclass;
+      this.methods = methods;
+      this.klassMethods = klassMethods;
+    }
+
+    @Override
+    public <R> R accept(Visitor<R> visitor) {
+      return visitor.visitClassStmt(this);
+    }
+
+   public final Token name;
+   public final Expr.Variable superclass;
+   public final List<Stmt.Function> methods;
+   public final List<Stmt.Function> klassMethods;
+  }
   public static class Expression extends Stmt {
     Expression(Expr expression) {
       this.expression = expression;
@@ -39,10 +58,11 @@ public abstract class Stmt {
    public final Expr expression;
   }
   public static class Function extends Stmt {
-    Function(Token name, List<Token> params, List<Stmt> body) {
+    Function(Token name, List<Token> params, List<Stmt> body, boolean isGetter) {
       this.name = name;
       this.params = params;
       this.body = body;
+      this.isGetter = isGetter;
     }
 
     @Override
@@ -53,6 +73,7 @@ public abstract class Stmt {
    public final Token name;
    public final List<Token> params;
    public final List<Stmt> body;
+   public final boolean isGetter;
   }
   public static class If extends Stmt {
     If(Expr condition, Stmt thenBranch, Stmt elseBranch) {
